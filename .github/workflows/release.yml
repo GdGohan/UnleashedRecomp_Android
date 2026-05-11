@@ -117,17 +117,17 @@ jobs:
             
               # Check if the link is from Google Drive.
               if [[ "$url" == *"drive.google.com"* ]] || [[ "$url" == *"drive.usercontent.google.com"* ]]; then
-                  # Extrai o ID do arquivo da URL
-                  local file_id=$(echo "$url" | grep -oP 'id=\K[^&]+')
+                  # Extracts the file ID from the URL.
+                  local file_id=$(echo "$url" | grep -oP 'id=\K[^&]+' || echo "$url" | grep -oP '/d/\K[^/?]+')
                 
-                  echo "Baixando do Google Drive (ID: $file_id)..."
+                  echo "Downloading from Google Drive (ID: $file_id)..."
                 
                   # Install gdown silently if it's not already there.
                   pip install -q gdown
                 
                   # Download directly to the desired folder.
                   # gdown automatically handles large files and permissions.
-                  gdown --id "$file_id" -O ./UnleashedRecompLib/private/ --remaining-ok
+                  gdown "$file_id" -O ./UnleashedRecompLib/private/ --fuzzy
               else
                   # Keep wget for other types of links (Direct Links, GitHub, etc.)
                   wget --no-check-certificate --content-disposition --tries=10 --retry-connrefused --waitretry=10 --timeout=60 -q -P ./UnleashedRecompLib/private/ "${url}"
