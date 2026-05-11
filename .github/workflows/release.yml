@@ -102,14 +102,38 @@ jobs:
         run: |
           mkdir -p ./UnleashedRecompLib/private
 
-          handle_url() {
-            local url="$1"
-            if [ -z "$url" ]; then return 0; fi
-            echo "::add-mask::${url}"
+          # handle_url() {
+          #  local url="$1"
+          #  if [ -z "$url" ]; then return 0; fi
+          #  echo "::add-mask::${url}"
             # Use --content-disposition to preserve original filenames
-            wget --no-check-certificate --content-disposition --tries=10 --retry-connrefused --waitretry=10 --timeout=60 -q -P ./UnleashedRecompLib/private/ "${url}"
+          #  wget --no-check-certificate --content-disposition --tries=10 --retry-connrefused --waitretry=10 --timeout=60 -q -P ./UnleashedRecompLib/private/ "${url}"
+          # }
+          
+          handle_url() {
+              local url="$1"
+              if [ -z "$url" ]; then return 0; fi
+              echo "::add-mask::${url}"
+            
+              # Check if the link is from Google Drive.
+              if [[ "$url" == *"drive.google.com"* ]] || [[ "$url" == *"drive.usercontent.google.com"* ]]; then
+                  # Extrai o ID do arquivo da URL
+                  local file_id=$(echo "$url" | grep -oP 'id=\K[^&]+')
+                
+                  echo "Baixando do Google Drive (ID: $file_id)..."
+                
+                  # Install gdown silently if it's not already there.
+                  pip install -q gdown
+                
+                  # Download directly to the desired folder.
+                  # gdown automatically handles large files and permissions.
+                  gdown --id "$file_id" -O ./UnleashedRecompLib/private/ --remaining-ok
+              else
+                  # Keep wget for other types of links (Direct Links, GitHub, etc.)
+                  wget --no-check-certificate --content-disposition --tries=10 --retry-connrefused --waitretry=10 --timeout=60 -q -P ./UnleashedRecompLib/private/ "${url}"
+              fi
           }
-
+        
           handle_url "$GAME_URL"
           handle_url "$UPDATE_URL"
           handle_url "$DLC_URL"
