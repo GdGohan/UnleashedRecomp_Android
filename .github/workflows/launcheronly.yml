@@ -20,6 +20,7 @@ jobs:
   prepare-assets:
     name: Prepare Assets
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     env:
       ASSET_REPO: ${{ secrets.ASSET_REPO }}
       ASSET_REPO_TOKEN: ${{ secrets.ASSET_REPO_TOKEN }}
