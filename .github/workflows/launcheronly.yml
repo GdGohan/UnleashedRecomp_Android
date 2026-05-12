@@ -474,7 +474,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="../thirdparty/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             $EXTRA_ARGS
         
-         cmake --build . --config Release --parallel $(nproc)
+          cmake --build . --config Release --parallel $(nproc)
 
       - name: Build Windows
         if: env.OS == 'windows'
