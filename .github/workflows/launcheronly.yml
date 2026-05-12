@@ -36,10 +36,10 @@ jobs:
           submodules: recursive
       
       - name: Create Stub Assets
-      run: |
-        mkdir -p UnleashedRecompLib/private
-        echo "stub" > UnleashedRecompLib/private/default.xex
-        echo "stub" > UnleashedRecompLib/private/shader.ar
+        run: |
+          mkdir -p UnleashedRecompLib/private
+          echo "stub" > UnleashedRecompLib/private/default.xex
+          echo "stub" > UnleashedRecompLib/private/shader.ar
 
       - name: Setup Java (Android only)
         if: env.OS == 'android'
@@ -70,17 +70,17 @@ jobs:
           ./thirdparty/vcpkg/bootstrap-vcpkg.sh
 
       - name: Setup Swap (Android only)
-      if: env.OS == 'android'
-      run: |
-        sudo swapoff /swapfile || true
-        sudo rm -f /swapfile
+        if: env.OS == 'android'
+        run: |
+          sudo swapoff /swapfile || true
+          sudo rm -f /swapfile
     
-        sudo fallocate -l 8G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
     
-        free -h
+          free -h
 
       - name: Build Android
         if: env.OS == 'android'
