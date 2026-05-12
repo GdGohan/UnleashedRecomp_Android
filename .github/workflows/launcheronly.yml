@@ -461,20 +461,20 @@ jobs:
           ./gradlew assembleRelease --stacktrace --max-workers=1 --no-daemon
 
       - name: Build Linux
-         if: env.OS == 'linux'
-         run: |
-           mkdir -p build_linux && cd build_linux
+        if: env.OS == 'linux'
+        run: |
+          mkdir -p build_linux && cd build_linux
        
-           EXTRA_ARGS=""
-           if [ -d "../build_tools/bin" ]; then
-             EXTRA_ARGS="-DHOST_TOOLS_DIR=../build_tools/bin"
-           fi
+          EXTRA_ARGS=""
+          if [ -d "../build_tools/bin" ]; then
+            EXTRA_ARGS="-DHOST_TOOLS_DIR=../build_tools/bin"
+          fi
        
-           cmake .. -DCMAKE_BUILD_TYPE=Release \
-             -DCMAKE_TOOLCHAIN_FILE="../thirdparty/vcpkg/scripts/buildsystems/vcpkg.cmake" \
-             $EXTRA_ARGS
+          cmake .. -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="../thirdparty/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            $EXTRA_ARGS
         
-          cmake --build . --config Release --parallel $(nproc)
+         cmake --build . --config Release --parallel $(nproc)
 
       - name: Build Windows
         if: env.OS == 'windows'
