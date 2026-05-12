@@ -301,7 +301,7 @@ jobs:
     runs-on: ${{ (inputs.os == 'windows') && 'windows-latest' || 'ubuntu-24.04' }}
     env:
       OS: ${{ inputs.os || 'android' }}
-      CMAKE_BUILD_PARALLEL_LEVEL: 2
+      CMAKE_BUILD_PARALLEL_LEVEL: 1
     defaults:
       run:
         shell: bash
@@ -339,6 +339,14 @@ jobs:
           key: vcpkg-${{ env.OS }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
               vcpkg-${{ env.OS }}-
+      
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
       - name: Setup Java
         if: env.OS == 'android'
@@ -395,6 +403,26 @@ jobs:
           sudo sysctl -w vm.swappiness=100
           sudo sysctl -w vm.overcommit_memory=1
           free -h
+          
+      - name: Setup Swap Space
+        if: env.OS == 'android'
+        run: |
+          sudo swapoff /swapfile || true
+          sudo rm -f /swapfile || true
+    
+          sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+    
+          free -h
+          
+      - name: Free More Disk
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo docker system prune -af || true
+          df -h
 
       - name: Build APK (Android)
         if: env.OS == 'android'
