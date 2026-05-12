@@ -15,23 +15,6 @@ on:
           - linux
           - windows
         default: 'android'
-      game_url:
-        description: 'URL for game data (ISO/XEX/ZIP/7Z/RAR)'
-        required: false
-        type: string
-      update_url:
-        description: 'URL for update data (default.xexp/ZIP/7Z/RAR) (optional)'
-        required: false
-        type: string
-      dlc_url:
-        description: 'URL for dlc data (shader.ar/ZIP/7Z/RAR) (optional)'
-        required: false
-        type: string
-      embed_game_files:
-        description: 'Embed game files in APK (no manual file copy needed on device, increases APK size)'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   prepare-assets:
@@ -96,9 +79,9 @@ jobs:
       - name: Download Data
         if: ${{ github.event_name == 'workflow_dispatch' || env.ASSET_REPO != '' }}
         env:
-          GAME_URL: ${{ github.event.inputs.game_url }}
-          UPDATE_URL: ${{ github.event.inputs.update_url }}
-          DLC_URL: ${{ github.event.inputs.dlc_url }}
+          GAME_URL: ''
+          UPDATE_URL: ''
+          DLC_URL: ''
         run: |
           mkdir -p ./UnleashedRecompLib/private
 
@@ -336,7 +319,7 @@ jobs:
   build:
     name: Build (${{ inputs.os || 'android' }})
     needs: prepare-assets
-    if: needs.prepare-assets.outputs.has_assets == 'true' || github.event_name == 'push'
+    if: github.event_name == 'push' || needs.prepare-assets.outputs.has_assets == 'true' || github.event.inputs.game_url == ''
     runs-on: ${{ (inputs.os == 'windows') && 'windows-latest' || 'ubuntu-24.04' }}
     env:
       OS: ${{ inputs.os || 'android' }}
@@ -478,12 +461,19 @@ jobs:
           ./gradlew assembleRelease --stacktrace --max-workers=1 --no-daemon
 
       - name: Build Linux
-        if: env.OS == 'linux'
-        run: |
-          mkdir -p build_linux && cd build_linux
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE="../thirdparty/vcpkg/scripts/buildsystems/vcpkg.cmake" \
-            -DHOST_TOOLS_DIR="../build_tools/bin"
+         if: env.OS == 'linux'
+         run: |
+           mkdir -p build_linux && cd build_linux
+       
+           EXTRA_ARGS=""
+           if [ -d "../build_tools/bin" ]; then
+             EXTRA_ARGS="-DHOST_TOOLS_DIR=../build_tools/bin"
+           fi
+       
+           cmake .. -DCMAKE_BUILD_TYPE=Release \
+             -DCMAKE_TOOLCHAIN_FILE="../thirdparty/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+             $EXTRA_ARGS
+        
           cmake --build . --config Release --parallel $(nproc)
 
       - name: Build Windows
