@@ -79,7 +79,7 @@ jobs:
       - name: Download Data
         if: ${{ github.event_name == 'workflow_dispatch' || env.ASSET_REPO != '' }}
         env:
-          GAME_URL: 'https://raw.githubusercontent.com/GdGohan/UnleashedRecomp_Android/main/files/default.xex'
+          GAME_URL: 'https://raw.githubusercontent.com/GdGohan/UnleashedRecomp_Android/main/files/files.zip'
           UPDATE_URL: ''
           DLC_URL: ''
         run: |
