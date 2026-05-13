@@ -19,8 +19,8 @@ on:
 jobs:
   prepare-assets:
     name: Prepare Assets
-    runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
     env:
       ASSET_REPO: ${{ secrets.ASSET_REPO }}
       ASSET_REPO_TOKEN: ${{ secrets.ASSET_REPO_TOKEN }}
@@ -391,19 +391,6 @@ jobs:
         run: |
           chmod +x ./apply_patches.sh
           ./apply_patches.sh
-
-      - name: Setup Swap Space
-        if: env.OS == 'android'
-        run: |
-          sudo swapoff /swapfile || true
-          sudo rm -f /swapfile
-          sudo fallocate -l 16G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          sudo sysctl -w vm.swappiness=100
-          sudo sysctl -w vm.overcommit_memory=1
-          free -h
           
       - name: Setup Swap Space
         if: env.OS == 'android'
@@ -411,7 +398,7 @@ jobs:
           sudo swapoff /swapfile || true
           sudo rm -f /swapfile || true
     
-          sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
+          sudo dd if=/dev/zero of=/swapfile bs=1M count=24576
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
@@ -430,15 +417,30 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          export ANDROID_NDK_HOME=${ANDROID_SDK_ROOT}/ndk/29.0.14206865
-          # JVM tuning for GitHub-hosted runners (7GB RAM):
-          # -Xmx2048m: 2GB heap for asset processing (game data chunks can be ~1GB each)
-          # -XX:+UseSerialGC: minimize GC overhead in single-worker build
-          # -XX:Min/MaxHeapFreeRatio: aggressively release unused heap back to OS
-          # Daemon/parallel disabled to reduce memory footprint during native compilation
-          export GRADLE_OPTS="-Xmx2048m -XX:+UseSerialGC -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=25 -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dorg.gradle.workers.max=1"
-          ./gradlew assembleRelease --stacktrace --max-workers=1 --no-daemon
-
+    
+          export ANDROID_NDK_HOME=${ANDROID_SDK_ROOT}/ndk/29.0.14206865}
+    
+          # Limita agressivamente uso de RAM
+          export GRADLE_OPTS="-Xmx1536m \
+          -XX:+UseSerialGC \
+          -XX:MaxMetaspaceSize=512m \
+          -Dorg.gradle.daemon=false \
+          -Dorg.gradle.parallel=false \
+          -Dorg.gradle.configureondemand=false \
+          -Dorg.gradle.workers.max=1 \
+          -Dkotlin.compiler.execution.strategy=in-process"
+    
+          # Evita compilação paralela do Ninja/CMake
+          export CMAKE_BUILD_PARALLEL_LEVEL=1
+    
+          # Evita OOM do clang/lld
+          export NINJA_STATUS="[%f/%t] "
+    
+          ./gradlew assembleRelease \
+            --stacktrace \
+            --no-daemon \
+            --max-workers=1
+      
       - name: Build Linux
         if: env.OS == 'linux'
         run: |
